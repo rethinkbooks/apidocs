@@ -1,0 +1,626 @@
+FORMAT: 1A
+HOST: https://direct.bookshout.com
+
+# BookShout Direct API
+The BookShout! Direct API allows third parties to sell eBooks on their respective sites. It is built using the REST protocol. We have exposed several end points that allow you to integrate your transactions with our catalog. These end points are designed to be simple and use built-in HTTP features, like HTTP authentication and HTTP verbs. You are allowed to interact with our API from a client-side web application via Basic Authentication. We reserve the right to throttle or terminate your API usage in the event there is any abuse or excessive usage. Such examples are:
+
+- Abusing the API via chatty requests
+- Attempts to DDOS the API
+- Attempts to impersonate other clients using the API
+
+JSON is the standard response from all our API end points.
+
+## Testing with Sandbox
+Please use the Sandbox environment for all testing. The sandbox environment allows you to simulate requests against our API without processing any transactions. The sandbox environment will not process any transactions and they will not be redeemable.
+Sandbox URL: [https://sandbox.bookshout-direct.com](https://sandbox.bookshout-direct.com). The URL [https://staging.bookshout-direct.com](https://staging.bookshout-direct.com) is also valid for sandbox.
+
+## Production
+For Production, please use [https://direct.bookshout.com](https://direct.bookshout.com)
+
+## Authentication
+Basic HTTP Authentication
+
+## Request Headers
++ Authorization ... [Base64](http://en.wikipedia.org/wiki/Base64) encoded string literal in form _"username:password"_ preceeded by authorization method and its space.
+
+## Errors
+The BookShout! Direct API uses standard HTTP response codes to indicate the success or a failure of an API request. In general, codes in the 2xx range equal success, 4xx range indicate errors from the information provided (e.g. missing fields, parameters, etc), and errors in the 5xx range indicate errors with BookShout!â€™s servers.
+
+### Handling Errors
+In the event our API raises exceptions, it is recommended that the consumer always tries to gracefully handle these exceptions.
+
++ Response 400  
+    The request provided could not be understood by the server.
+
++ Response 401  
+    Authentication is required via HTTP Basic Auth.
+
++ Response 403  
+    A request attempted to modify or retrieve a resource that you do not have rights too.
+
++ Response 404  
+    A request for the given resource was not found.
+
++ Response 405  
+    A request attempted to retrieve or modify a resource by using method not allowed.
+
++ Resopnse 409  
+    A request attempted to modify a resource but could not be completed due to a conflict with the current state of the resource.
+
++ Response 500  
+    An error has occurred on the BookShout! API servers.
+
+
+## Client [/api/v1/clients.json]
+Client information will need to be fetched to retreive relevant metadata.
+
+### Retreive Client object [GET]
+Client (user) information can be fetched using a GET request. Developers will need to do this to retrieve the "client_id" for making subsequent requests.
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                id: 1,
+                name: "Client Name",
+                status: "active",
+                marketing_quiet_period_days: null,
+                marketing_quiet_period_expires_at: null,
+                email: "email@bookshout.com",
+                landing_graphics: [
+                    {
+                        id: 1,
+                        client_id: 1,
+                        name: "client logo",
+                        default: true,
+                        image_urls: {
+                            original: "original.png",
+                            large: "large.png",
+                            medium: "medium.png",
+                            thumb: "thumb.png"
+                        }
+                    }
+                ]
+            }
+
+## DEPRECATED Client Product Feeds [/api/v1/clients/{client_id}/client_feeds.json]
+Once customers have access to BookShout eBook products, the API will supply an [ONIX 3.0 Feed](http://www.editeur.org/74/FAQs/) containing all the available books for your account with relevant product details.
+
+- What is ONIX?   
+ONIX stands for ONline Information eXchange; it is an XML-based family of international standards intended to support computer-to-computer communication between parties involved in creating, distributing, licensing or otherwise making available intellectual property in published form, whether physical or digital.
+
+### Retreive Client Product Feeds [GET]
+All client feeds, weekly and daily, for a customer - ordered by oldest to newest.
+    
++ Parameters
+    + client_id (required, number, `1`) ... Numeric `id` of the Client to perform action with. Has example value.
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+    
+    + Body
+    
+            { client_feeds: 
+                {
+                    id: 1,
+                    client_id: 1,
+                    feed_type: "weekly",
+                    download_url: "https://staging.bookshout-direct.com/api/v1/clients/1/client_feeds/1/download"
+                },
+                {
+                    id: 2,
+                    client_id: 1,
+                    feed_type: "weekly",
+                    download_url: "https://staging.bookshout-direct.com/api/v1/clients/1/client_feeds/2/download"
+                },
+                {
+                    id: 3,
+                    client_id: 1,
+                    feed_type: "weekly",
+                    download_url: "https://staging.bookshout-direct.com/api/v1/clients/1/client_feeds/2/download"
+                }
+            }
+
+## DEPRECATED Client Product Feed [/api/v1/clients/{client_id}/client_feeds/{id}.json]
+Retrieve a specific ONIX Feed tied to your account .
+    
++ Parameters
+    + client_id (required, number, `1`) ... Numeric `id` of the Client to perform action with.
+    + id (required, number, `1`) ... Numeric `id` of the Client Feed to perform action with.
+
+### Retrieve a Client Feed [GET]
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+    + Header
+        
+            Authorization: Basic xxxx
+
+    + Body
+        
+            {
+                id: 3,
+                client_id: 1,
+                feed_type: "weekly",
+                download_url: "https://staging.bookshout-direct.com/api/v1/clients/1/client_feeds/2/download"
+            }
+
+## Book Feeds [/api/v1/book_feeds.json]
+This is the json feeds that is replacing the ONIX file generation and old client_feeds API,
+it is much simpler and much faster.
+
+### Retrieve products or books [GET]
+All products that are available for the client.
+
++ Parameters
+    + page (optional, integer, `1`) ... Page to retrieve for list of products.
+    + per_page (optional, integer, `10`) ... Amount of products per page.
+    + books_with_isbn (optional, boolean, `false`) ... If you only want books with real isbns.
+    + books_with_cover (optional, boolean, `false`) ... If you only want books with cover image.
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+
+    + Headers
+            
+            X-TOTAL-COUNT: Amount of total products in the feed.
+            LINK: Links to navigate the paginated list: next, prev, first, last.
+    + Body
+        {
+            "book_feeds": [
+                {
+                    "title": "The Return of Sherlock Holmes",
+                    "subtitle": "",
+                    "cover_url": "//d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-cover.jpg?1428727092",
+                    "cover_urls": {
+                        "cover": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-cover.jpg?1428727092",
+                        "cover_size": {
+                            "width": 386,
+                            "height": 530
+                        },
+                        "icon": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-icon.jpg?1428727092",
+                        "icon_size": {
+                            "width": 58,
+                            "height": 80
+                        },
+                        "small": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-small.jpg?1428727092",
+                        "small_size": {
+                            "width": 117,
+                            "height": 160
+                        },
+                        "medium": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-medium.jpg?1428727092",
+                        "medium_size": {
+                            "width": 466,
+                            "height": 640
+                        },
+                        "bookshelf": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-bookshelf.jpg?1428727092",
+                        "bookshelf_size": {
+                            "width": 291,
+                            "height": 400
+                        },
+                        "bookshelf_2x": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-bookshelf_2x.jpg?1428727092",
+                        "bookshelf_2x_size": {
+                            "width": 437,
+                            "height": 600
+                        },
+                        "bookshelf_3x": "https://d1d5xqjpwbyss4.cloudfront.net/covers/165389/165389-bookshelf_3x.jpg?1428727092",
+                        "bookshelf_3x_size": {
+                            "width": 655,
+                            "height": 900
+                        }
+                    },
+                    "isbn13": "9781615341665",
+                    "publishing_date": "1995-02-01T00:00:00Z",
+                    "language": null,
+                    "categories": "",
+                    "publisher": [
+                        "Project Gutenberg"
+                    ],
+                    "summary_description": "The Return of Sherlock Holmes is a collection of 13 Sherlock Holmes stories, originally published in 1903-1904, by Arthur Conan Doyle.",
+                    "authors": [
+                        {
+                            "author": {
+                                "bio": null,
+                                "books_count": 78,
+                                "name": "Sir Doyle Arthur Conan"
+                            }
+                        }
+                    ],
+                    "imprint": {
+                        "name": "Project Gutenberg",
+                        "preview_percentage": 10
+                    },
+                    "reviews": [
+                        {
+                            "book_id": 165389,
+                            "created_at": "2015-01-14T22:43:33Z",
+                            "id": 122063,
+                            "rating": 3,
+                            "review": null,
+                            "updated_at": "2015-01-14T22:43:33Z",
+                            "user": {
+                                "avatar_url": "http://24487971589cc0584e71-97fe2dec2e455b1afe0adbc1e5f44b45.r41.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827elarge.jpeg?1359129306",
+                                "biography": "Experiencing books in a whole new way.",
+                                "email": "support@getsocialbooks.com",
+                                "first_name": "BookShout",
+                                "followers_count": 208,
+                                "following_count": 7,
+                                "id": 3418,
+                                "last_name": "Books",
+                                "location": "Frisco, TX",
+                                "prompted_for_highlight_sharing": false,
+                                "protected": false,
+                                "public_readings_count": 178,
+                                "sent_bookstore_invitation": false,
+                                "signup_step": null,
+                                "avatar_urls": {
+                                    "small": "https://c3649b0bfdf10c2f1b3a-97fe2dec2e455b1afe0adbc1e5f44b45.ssl.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827esmall.jpg?1429022573",
+                                    "medium": "https://c3649b0bfdf10c2f1b3a-97fe2dec2e455b1afe0adbc1e5f44b45.ssl.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827emedium.jpg?1429022573",
+                                    "large": "https://c3649b0bfdf10c2f1b3a-97fe2dec2e455b1afe0adbc1e5f44b45.ssl.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827elarge.jpg?1429022573",
+                                    "larger": "https://c3649b0bfdf10c2f1b3a-97fe2dec2e455b1afe0adbc1e5f44b45.ssl.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827elarger.jpg?1429022573",
+                                    "original": "https://c3649b0bfdf10c2f1b3a-97fe2dec2e455b1afe0adbc1e5f44b45.ssl.cf1.rackcdn.com/3418/30f0812ce051aa5fd23dab5508fe827eoriginal.jpg?1429022573"
+                                }
+                            }
+                        }
+                    ],
+                    "prices": [
+                        {
+                            "currency": "USD",
+                            "type": "01",
+                            "price": "0.00",
+                            "country": "WORLD",
+                            "countries_included": null,
+                            "countries_excluded": null,
+                            "regions_included": null,
+                            "regions_excluded": null,
+                            "start_date": null,
+                            "end_date": null
+                        }
+                    ]
+                }
+            ]
+        }
+
+## Purchases [/api/v1/purchases.json]
+Any purchase made on a third-party store can be fulfilled on BookShout. After a purchase is fulfilled on the API, a purchase object will be returned with attributes. Within this object, a URL will exist that will allow users to redeem their book on BookShout.
+
+### Retreive Purchases [GET]
+All purchases for a client, along with all relevant details.
+
++ Parameters
+    + client_transaction_token (optional, string, `34950398409skldfjsd2309dfkld`) ... Transaction token used to track the purchase on your store. Can be used to filter results. Defaults to null.  
+    + page (optional, integer, `1`) ... Page to retrieve for the list of purchases. Defaults to 1.  
+    + per_page (optional, integer, `25`) ... Amount of records to return per page. Defaults to 25. Max is 50.  
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                items: [
+                    {
+                        id: 40,
+                        isbns: [
+                            "9780307887955"
+                        ],
+                        client_transaction_token: "uniquetoken",
+                        url: "http://staging.bookshout.com?bookshout_transaction_token=f3ce2c7218218974efe4993ede8307e5",
+                        bookshout_transaction_token: "f3ce2c7218218974efe4993ede8307e5",
+                        email: "test@bookshout.com",
+                        landing_graphic_urls: {
+                            original: "original.png",
+                            large: "large.png",
+                            medium: "medium.png",
+                            thumb: "thumb.png"
+                        },
+                        line_items: [
+                            {
+                                id: 48,
+                                purchase_id: 40,
+                                isbn13: "9780307887955",
+                                created_at: "2014-05-13T17:01:08.000Z",
+                                updated_at: "2014-05-13T17:01:08.000Z",
+                                status: "approved"
+                            }
+                        ]
+                    },
+                    {
+                        id: 41,
+                        isbns: [
+                            "9781418575595"
+                        ],
+                        client_transaction_token: "uniquetoken",
+                        url: "http://staging.bookshout.com?bookshout_transaction_token=f3ce2c7218218974efe4993ede8307e5",
+                        bookshout_transaction_token: "f3ce2c7218218974efe4993ede8307e5",
+                        email: "test@bookshout.com",
+                        landing_graphic_urls: {
+                            original: "original.png",
+                            large: "large.png",
+                            medium: "medium.png",
+                            thumb: "thumb.png"
+                        },
+                        line_items: [
+                            {
+                                id: 49,
+                                purchase_id: 41,
+                                isbn13: "9781418575595",
+                                created_at: "2014-05-13T17:01:08.000Z",
+                                updated_at: "2014-05-13T17:01:08.000Z",
+                                status: "approved"
+                            }
+                        ]
+                    }
+                ],
+                meta: {
+                    total_pages: 1,
+                    current_page: 1
+                }
+            }
+
+### Create a Purchase [POST]
+To save a BookShout book product to a transaction from your store. you create a purchase object that includes the associated email address, an array of isbns, and a unique transaction identifier.
+    
++ Request (application/json)
+
+    + `email` (required, string, `test@bookshout.com`) ... `email` associated with the purchase.
+    + `isbns` (required, array, `["9781418575595", "9780307887955"]`) ... An array of ISBN-13s representing the books purchased on your store matching books available in your client feed.
+    + `landing_graphic_id` (optional, integer, `1`) ... the landing graphic you want to use for this purchase which will display when the user signs in to read. If one is not specified, the default graphic will be used.
+    + `client_transaction_token` (required, string, `34950398409skldfjsd2309dfkld`) ... A unique identifier/token generated on your end to represent the transaction. Max size 64 chars.
+
+    + Header
+        
+            Authorization: Basic xxxx
+
+    + Body
+
+            { "email": "test@bookshout.com", "isbns": ["9781418575595", "9780307887955"], "landing_graphic_id": 1, "client_transaction_token": "uniquetoken" }
+
++ Response 201 (application/json)
+
+    + Body
+    
+            {
+                id: 41,
+                isbns: [
+                    "9781418575595"
+                ],
+                url: "http://staging.bookshout.com?bookshout_transaction_token=f3ce2c7218218974efe4993ede8307e5",
+                bookshout_transaction_token: "f3ce2c7218218974efe4993ede8307e5",
+                email: "test@bookshout.com",
+                landing_graphic_urls: {
+                    original: "original.png",
+                    large: "large.png",
+                    medium: "medium.png",
+                    thumb: "thumb.png"
+                },
+                line_items: [
+                    {
+                        id: 49,
+                        purchase_id: 41,
+                        isbn13: "9781418575595",
+                        created_at: "2014-05-13T17:01:08.000Z",
+                        updated_at: "2014-05-13T17:01:08.000Z",
+                        status: "approved"
+                    }
+                ]
+            }    
+
+## Purchase [/api/v1/purchases/{id}.json]
+
++ Parameters
+    + id (required, number, `1`) ... Numeric `id` of the Purchase to perform action with.
+
+### Retrieve a Purchase [GET]
+A single Purchase object with all its details.
+
++ Request
+    
+    + Headers
+    
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+
+    + Body
+
+            { purchase:  
+                {
+                    id: 40,
+                    isbns: [
+                        "9780307887955"
+                    ],
+                    url: "http://staging.bookshout.com?bookshout_transaction_token=f3ce2c7218218974efe4993ede8307e5",
+                    bookshout_transaction_token: "f3ce2c7218218974efe4993ede8307e5",
+                    email: "test@bookshout.com",
+                    landing_graphic_urls: {
+                        original: "original.png",
+                        large: "large.png",
+                        medium: "medium.png",
+                        thumb: "thumb.png"
+                    },
+                    line_items: [
+                        {
+                            id: 48,
+                            purchase_id: 40,
+                            isbn13: "9780307887955",
+                            created_at: "2014-05-13T17:01:08.000Z",
+                            updated_at: "2014-05-13T17:01:08.000Z",
+                            status: "approved"
+                        }
+                    ]
+                }
+            }
+
+### Revoking a line item from a purchase [PUT]
+You can revoke any line item for your purchase via a HTTP PUT.
+
++ Parameters
+    + id (required, number, `1`) ... Numeric `id` of the Purchase to perform action with.
+
++ Request (application/json)
+
+    + Header
+        
+            Authorization: Basic xxxx
+
+    + Body
+
+            { isbn: "9781418575595", status: "revoked" }
+            
++ Response 202 (An purchase object with an updated array of ISBN-13s.)
+
+    + Body
+
+            { purchase:  
+                {
+                    id: 40,
+                    isbns: [
+                        "9780307887955"
+                    ],
+                    url: "http://staging.bookshout.com?bookshout_transaction_token=f3ce2c7218218974efe4993ede8307e5",
+                    bookshout_transaction_token: "f3ce2c7218218974efe4993ede8307e5",
+                    email: "test@bookshout.com",
+                    landing_graphic_urls: {
+                        original: "original.png",
+                        large: "large.png",
+                        medium: "medium.png",
+                        thumb: "thumb.png"
+                    },
+                    line_items: [
+                        {
+                            id: 48,
+                            purchase_id: 40,
+                            isbn13: "9780307887955",
+                            created_at: "2014-05-13T17:01:08.000Z",
+                            updated_at: "2014-05-13T17:01:08.000Z",
+                            status: "approved"
+                        }
+                    ]
+                }
+            }
+
+## Users [/api/v1/users.json]
+Users on bookshout.
+
+### Create a User [POST]
+You might want to create bookshout users from your site so your users can log in to bookshout with your credentials.
+    
++ Request (application/json)
+
+    + `email` (required, string, `test@bookshout.com`) ... `email` of the user to be created.
+    + `first_name` (required, string, `Tester') ... First name of user.
+    + `last_name` (required, string, `Testingson`) ... Last name of user.
+    + `password` (required, string, `S3cUreP@ss`) ... The password that the user will use to sign in to bookshout.
+
+    + Header
+        
+            Authorization: Basic xxxx
+
+    + Body
+
+            { "email": "test@bookshout.com", "first_name": "Tester", "last_name": "Testingson", "password": "S3cUreP@ss" }
+
++ Response 201 (application/json)
+
+    + Body
+    
+            {
+                "avatar_url": null,
+                "biography": null,
+                "email": "test@bookshout.com",
+                "first_name": "Tester",
+                "followers_count": 0,
+                "following_count": 0,
+                "id": 3658,
+                "last_name": "Testingson",
+                "location": null,
+                "prompted_for_highlight_sharing": false,
+                "protected": false,
+                "public_readings_count": 0,
+                "sent_bookstore_invitation": false,
+                "signup_step": null,
+                "avatar_urls": {
+                    "small": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
+                    "medium": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
+                    "large": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
+                    "larger": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
+                    "original": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png"
+                }
+            }
+
+## Users books [/api/v1/users/{id}/books.json]
+Get user books on bookshout.
+### Get a User's Books [GET]
+You might want to get a list of a users books.
+    
++ Request (application/json)
+
+    + `id` (require, integer) ... Id of User.
+    + `page` (optional, integer, 1) ... Page to get.
+    + `per_page` (optional, integer, 10) ... Number of items per page.
+
+    + Header
+        
+            Authorization: Basic xxxx
+
++ Response 200 (application/json)
+
+    + Body
+    
+            {
+                "users": [
+                    {
+                        "id": 1752888,
+                        "user_id": 3477,
+                        "book_id": 1,
+                        "file_name": "/cover.xhtml",
+                        "start_offset": 0,
+                        "end_offset": 0,
+                        "start_path": "[]",
+                        "end_path": "[]",
+                        "page_number": 0,
+                        "purchased_date": null,
+                        "setup": true,
+                        "read_buckets": null,
+                        "is_private": false,
+                        "receipt": null,
+                        "product": null,
+                        "reading_type": "purchasable",
+                        "store": null,
+                        "braintree_transaction_token": null,
+                        "preview_complete": false,
+                        "last_opened_at": "2014-09-02T21:14:40Z",
+                        "created_at": "2014-08-26T21:31:19Z",
+                        "updated_at": "2014-09-02T21:12:17Z"
+                    }
+                ]
+            }
+
