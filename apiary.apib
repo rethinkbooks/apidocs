@@ -12,7 +12,7 @@ JSON is the standard response from all our API end points.
 
 ## Testing with Sandbox
 Please use the Sandbox environment for all testing. The sandbox environment allows you to simulate requests against our API without processing any transactions. The sandbox environment will not process any transactions and they will not be redeemable.
-Sandbox URL: [https://sandbox.bookshout-direct.com](https://sandbox.bookshout-direct.com). The URL [https://staging.bookshout-direct.com](https://staging.bookshout-direct.com) is also valid for sandbox.
+The URL [https://staging-direct.bookshout.com](https://staging-direct.bookshout.com).
 
 ## Production
 For Production, please use [https://direct.bookshout.com](https://direct.bookshout.com)
@@ -459,54 +459,30 @@ You can revoke any line item for your purchase via a HTTP PUT.
                 }
             }
 
-## Users [/api/v1/users.json]
-Users on bookshout.
 
-### Create a User [POST]
-You might want to create bookshout users from your site so your users can log in to bookshout with your credentials.
+## Books [/api/v1/books/{isbn}.json]
+Get a book on bookshout.
+### Get a Book [GET]
+You might want to get information about a book.
     
 + Request (application/json)
 
-    + `email` (required, string, `test@bookshout.com`) ... `email` of the user to be created.
-    + `first_name` (required, string, `Tester') ... First name of user.
-    + `last_name` (required, string, `Testingson`) ... Last name of user.
-    + `password` (required, string, `S3cUreP@ss`) ... The password that the user will use to sign in to bookshout.
+    + `isbn` (require, string) ... ISBN13 of book.
 
     + Header
         
             Authorization: Basic xxxx
++ Response 200 (application/json)
 
     + Body
+        {
+            "id": 23,
+            "title": "Test Book"
+        }
 
-            { "email": "test@bookshout.com", "first_name": "Tester", "last_name": "Testingson", "password": "S3cUreP@ss" }
 
-+ Response 201 (application/json)
-
-    + Body
-    
-            {
-                "avatar_url": null,
-                "biography": null,
-                "email": "test@bookshout.com",
-                "first_name": "Tester",
-                "followers_count": 0,
-                "following_count": 0,
-                "id": 3658,
-                "last_name": "Testingson",
-                "location": null,
-                "prompted_for_highlight_sharing": false,
-                "protected": false,
-                "public_readings_count": 0,
-                "sent_bookstore_invitation": false,
-                "signup_step": null,
-                "avatar_urls": {
-                    "small": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
-                    "medium": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
-                    "large": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
-                    "larger": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png",
-                    "original": "https://d39546e34cd7df005f15-25095f2f11b8bd76ffbae0b3692bbee3.ssl.cf1.rackcdn.com/avatar100px.png"
-                }
-            }
+## Users [/api/v1/users.json]
+Users on bookshout.
 
 ## Users books [/api/v1/users/{id}/books.json]
 Get user books on bookshout.
@@ -555,4 +531,3 @@ You might want to get a list of a users books.
                     }
                 ]
             }
-
